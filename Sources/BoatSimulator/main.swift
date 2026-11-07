@@ -56,8 +56,8 @@ struct ToolButton: ButtonStyle {
         configuration.label.font(.system(size: 9, weight: .heavy, design: .monospaced))
             .padding(.horizontal, 10).padding(.vertical, 9)
             .background(active ? Color(red: 0.0, green: 0.85, blue: 1.0).opacity(0.28) : Color.white.opacity(0.07))
-            .overlay(RoundedRectangle(cornerRadius: 4).stroke(active ? Color.cyan : Color.white.opacity(0.2)))
-            .foregroundColor(active ? .cyan : .white)
+            .overlay(RoundedRectangle(cornerRadius: 4).stroke(active ? Color(red: 0.0, green: 0.85, blue: 1.0) : Color.white.opacity(0.2)))
+            .foregroundColor(active ? Color(red: 0.0, green: 0.85, blue: 1.0) : Color.white)
             .opacity(configuration.isPressed ? 0.65 : 1)
     }
 }
@@ -143,7 +143,7 @@ final class ShipScene: SKScene {
         }
         for i in 0..<7 {
             let wave = SKShapeNode()
-            wave.strokeColor = SKColor.cyan.withAlphaComponent(0.32)
+            wave.strokeColor = SKColor(red: 0.0, green: 0.85, blue: 1.0).withAlphaComponent(0.32)
             wave.lineWidth = 1.2; wave.zPosition = 8
             addChild(wave); waterNodes.append(wave)
         }
@@ -316,7 +316,7 @@ final class ShipScene: SKScene {
         default: break
         }
         let ring = SKShapeNode(circleOfRadius: 24)
-        ring.strokeColor = .cyan.withAlphaComponent(0.8); ring.lineWidth = 2
+        ring.strokeColor = SKColor(red: 0.0, green: 0.85, blue: 1.0, alpha: 0.8); ring.lineWidth = 2
         ring.fillColor = .clear; ring.position = point; ring.zPosition = 30; addChild(ring)
         ring.run(.sequence([.group([.scale(to: 2.1, duration: 0.25), .fadeOut(withDuration: 0.25)]), .removeFromParent()]))
     }
