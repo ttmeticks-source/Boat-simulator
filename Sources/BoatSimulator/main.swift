@@ -420,10 +420,11 @@ final class ShipScene: SKScene {
         addShipRect(82, 8, 144, 169, ivory, shadow, 2, 11)
 
         // Continuous deck stripe and metal railings.
-        for y in [52.0, 81.0, 107.0, 133.0, 157.0] {
+        let railingYs: [CGFloat] = [52, 81, 107, 133, 157]
+        for y in railingYs {
             addShipLine([CGPoint(x: -270, y: y), CGPoint(x: 270, y: y)], SKColor(red: 0.42, green: 0.43, blue: 0.41, alpha: 0.85), 1, 12)
         }
-        for x in stride(from: -260.0, through: 260.0, by: 9) {
+        for x in stride(from: CGFloat(-260), through: CGFloat(260), by: CGFloat(9)) {
             addShipLine([CGPoint(x: x, y: 81), CGPoint(x: x, y: 89)], SKColor(white: 0.55, alpha: 0.75), 0.7, 12)
         }
 
@@ -463,7 +464,7 @@ final class ShipScene: SKScene {
         }
 
         // Four ochre funnels, black caps, red bases, and dark smoke outlets.
-        for (i, x) in [-130.0, -48.0, 36.0, 118.0].enumerated() {
+        let funnelPositions: [CGFloat] = [-130, -48, 36, 118]\n        for (i, x) in funnelPositions.enumerated() {
             let funnelHeight: CGFloat = i == 1 ? 55 : 50
             addShipRect(25, funnelHeight, x, 174 + funnelHeight * 0.18, brass,
                         SKColor(red: 0.28, green: 0.20, blue: 0.10, alpha: 1), 4, 16)
@@ -579,12 +580,36 @@ final class ShipScene: SKScene {
             hullPath.closeSubpath()
         }
         hullSkin.path = hullPath
+        let redPath = CGMutablePath()
+        if particles.count >= 4 {
+            let firstX = particles[0].position.x
+            let lastX = particles[particles.count - 2].position.x
+            redPath.move(to: CGPoint(x: firstX, y: waterY))
+            for i in stride(from: 0, to: particles.count, by: 2) {
+                redPath.addLine(to: particles[i].position)
+            }
+            redPath.addLine(to: CGPoint(x: lastX, y: waterY))
+            redPath.closeSubpath()
+        }
+        hullRedBand.path = redPath
+
+        // Keep the deck artwork aligned with the moving hull while allowing
+        // the particle hull itself to flex and tear independently.
+        if particles.count >= 4 {
+            let leftEnd = particles[0].position
+            let rightEnd = particles[particles.count - 2].position
+            let midpointX = (leftEnd.x + rightEnd.x) * 0.5
+            let midpointY = (leftEnd.y + rightEnd.y) * 0.5
+            shipArt.position = CGPoint(x: midpointX, y: waterY - 35 + (midpointY - (waterY - 14)))
+            shipArt.zRotation = atan2(rightEnd.y - leftEnd.y, rightEnd.x - leftEnd.x)
+        }
+
         let waterHeight = min(0.72, CGFloat(flood) / 100.0 * 0.72)
         let innerPath = CGMutablePath()
         let left = particles.first?.position.x ?? 0
         let right = particles.dropFirst(2).last?.position.x ?? size.width
-        let bottom = waterY + 40
-        let top = waterY + 40 + waterHeight * 55
+        let bottom = waterY - 14
+        let top = waterY - 14 + waterHeight * 42
         innerPath.move(to: CGPoint(x: left + 20, y: bottom))
         innerPath.addLine(to: CGPoint(x: right - 20, y: bottom))
         innerPath.addLine(to: CGPoint(x: right - 35, y: top))
@@ -613,10 +638,10 @@ final class ShipScene: SKScene {
     private func updateWater(time: CGFloat) {
         for (i, line) in waterNodes.enumerated() {
             let path = CGMutablePath()
-            let yBase = waterY + CGFloat(i) * 2
+            let yBase = waterY - CGFloat(i) * 13
             path.move(to: CGPoint(x: 0, y: yBase))
             for x in stride(from: CGFloat(0), through: size.width, by: 24) {
-                let y = yBase + sin(x * 0.012 + time * 1.5) * (2 + waveEnergy * 14)
+                let y = yBase + sin(x * 0.009 + time * 1.25) * (1.6 + waveEnergy * 8)
                 path.addLine(to: CGPoint(x: x, y: y))
             }
             line.path = path
