@@ -195,7 +195,7 @@ final class ShipScene: SKScene {
         name.position = CGPoint(x: cx, y: baseY + 13); name.zPosition = 7; addChild(name)
     }
 
-    private enum Material { case steel, deck }
+    private enum Material: Equatable { case steel, deck }
     private func addParticle(_ p: CGPoint, mass: CGFloat, radius: CGFloat, kind: Material) {
         let node = SKShapeNode(circleOfRadius: radius)
         node.fillColor = kind == .steel ? SKColor(red: 0.64, green: 0.16, blue: 0.12, alpha: 1) : SKColor(white: 0.72, alpha: 1)
@@ -301,6 +301,7 @@ final class ShipScene: SKScene {
             }
             let removed = before - springs.count
             leakCount += removed
+            if removed > 0 { flood = min(100, flood + Double(removed) * 3) }
         case "Repair":
             // Reconnect nearby separated nodes with a fresh structural link.
             let nearby = particles.indices.filter { distance(particles[$0].position, point) < 55 }
@@ -354,7 +355,5 @@ private func - (lhs: CGPoint, rhs: CGPoint) -> CGVector { CGVector(dx: lhs.x - r
 private func + (lhs: CGPoint, rhs: CGPoint) -> CGPoint { CGPoint(x: lhs.x + rhs.x, y: lhs.y + rhs.y) }
 private func - (lhs: CGPoint, rhs: CGVector) -> CGPoint { CGPoint(x: lhs.x - rhs.dx, y: lhs.y - rhs.dy) }
 private func * (lhs: CGVector, rhs: CGFloat) -> CGVector { CGVector(dx: lhs.dx * rhs, dy: lhs.dy * rhs) }
-private func * (lhs: CGVector, rhs: CGFloat) -> CGVector { CGVector(dx: lhs.dx * rhs, dy: lhs.dy * rhs) }
 private func + (lhs: CGVector, rhs: CGVector) -> CGVector { CGVector(dx: lhs.dx + rhs.dx, dy: lhs.dy + rhs.dy) }
 private func * (lhs: CGPoint, rhs: CGFloat) -> CGVector { CGVector(dx: lhs.x * rhs, dy: lhs.y * rhs) }
-private func - (lhs: CGPoint, rhs: CGVector) -> CGPoint { CGPoint(x: lhs.x - rhs.dx, y: lhs.y - rhs.dy) }
