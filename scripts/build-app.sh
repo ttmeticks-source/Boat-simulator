@@ -7,7 +7,7 @@ export MACOSX_DEPLOYMENT_TARGET=11.0
 mkdir -p "$ROOT/build"
 SDK="$(xcrun --sdk macosx --show-sdk-path)"
 for ARCH in arm64 x86_64; do
-  xcrun swiftc -O -sdk "$SDK" -target "${ARCH}-apple-macosx11.0" \
+  xcrun swiftc -parse-as-library -O -sdk "$SDK" -target "${ARCH}-apple-macosx11.0" \
     -framework AppKit -framework SceneKit -framework SwiftUI -framework QuartzCore \
     Sources/BoatSimulator/main.swift -o "$ROOT/build/BoatSimulator-$ARCH"
 done
