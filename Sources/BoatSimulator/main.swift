@@ -143,7 +143,7 @@ final class ShipScene: SKScene {
         }
         for i in 0..<7 {
             let wave = SKShapeNode()
-            wave.strokeColor = SKColor(red: 0.0, green: 0.85, blue: 1.0, alpha: 0.32)
+            wave.strokeColor = SKColor(red: 0.0, green: 0.85, blue: 1.0, alpha: 1.0).withAlphaComponent(0.32)
             wave.lineWidth = 1.2; wave.zPosition = 8
             addChild(wave); waterNodes.append(wave)
         }
