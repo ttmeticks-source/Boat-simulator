@@ -24,7 +24,7 @@ struct SandboxView: View {
                 HStack(spacing: 14) {
                     VStack(alignment: .leading, spacing: 3) {
                         Text("FLOATLAB").font(.system(size: 20, weight: .black, design: .rounded)).tracking(3)
-                        Text("2D SHIP PHYSICS SANDBOX").font(.system(size: 9, weight: .bold, design: .monospaced)).tracking(2).foregroundColor(.cyan)
+                        Text("2D SHIP PHYSICS SANDBOX").font(.system(size: 9, weight: .bold, design: .monospaced)).tracking(2).foregroundColor(Color(red: 0.0, green: 0.85, blue: 1.0))
                     }
                     Spacer()
                     ForEach(tools, id: \.self) { item in
@@ -44,7 +44,7 @@ struct SandboxView: View {
                     Text("PARTICLE + SPRING STRUCTURE")
                 }.font(.system(size: 9, weight: .bold, design: .monospaced))
                     .foregroundColor(.white.opacity(0.75))
-                    .padding(14).background(.black.opacity(0.55))
+                    .padding(14).background(Color.black.opacity(0.55))
             }
         }.preferredColorScheme(.dark)
     }
@@ -55,7 +55,7 @@ struct ToolButton: ButtonStyle {
     func makeBody(configuration: Configuration) -> some View {
         configuration.label.font(.system(size: 9, weight: .heavy, design: .monospaced))
             .padding(.horizontal, 10).padding(.vertical, 9)
-            .background(active ? Color.cyan.opacity(0.28) : Color.white.opacity(0.07))
+            .background(active ? Color(red: 0.0, green: 0.85, blue: 1.0).opacity(0.28) : Color.white.opacity(0.07))
             .overlay(RoundedRectangle(cornerRadius: 4).stroke(active ? Color.cyan : Color.white.opacity(0.2)))
             .foregroundColor(active ? .cyan : .white)
             .opacity(configuration.isPressed ? 0.65 : 1)
@@ -80,12 +80,12 @@ struct PhysicsView: NSViewRepresentable {
     }
     func updateNSView(_ view: SKView, context: Context) {
         context.coordinator.scene?.selectedTool = tool
-        context.coordinator.scene?.paused = paused
+        context.coordinator.scene?.simulationPaused = paused
         if context.coordinator.resetID != resetID {
             let scene = ShipScene(size: view.bounds.size)
             scene.scaleMode = .resizeFill
             scene.selectedTool = tool
-            scene.paused = paused
+            scene.simulationPaused = paused
             view.presentScene(scene)
             context.coordinator.scene = scene
             context.coordinator.resetID = resetID
@@ -105,7 +105,7 @@ struct PhysicsView: NSViewRepresentable {
 
 final class ShipScene: SKScene {
     var selectedTool = "Impact"
-    var paused = false { didSet { isPaused = paused } }
+    var simulationPaused = false { didSet { isPaused = simulationPaused } }
     private var particles: [HullParticle] = []
     private var springs: [HullSpring] = []
     private var waterY: CGFloat = 245
@@ -295,7 +295,9 @@ final class ShipScene: SKScene {
         case "Cut":
             let before = springs.count
             springs.removeAll { s in
-                let midpoint = (particles[s.a].position + particles[s.b].position) * 0.5
+                let pa = particles[s.a].position
+                let pb = particles[s.b].position
+                let midpoint = CGPoint(x: (pa.x + pb.x) * 0.5, y: (pa.y + pb.y) * 0.5)
                 if distance(midpoint, point) < 24 { s.node.removeFromParent(); return true }
                 return false
             }
