@@ -8,7 +8,7 @@ mkdir -p "$ROOT/build"
 SDK="$(xcrun --sdk macosx --show-sdk-path)"
 for ARCH in arm64 x86_64; do
   xcrun swiftc -parse-as-library -O -sdk "$SDK" -target "${ARCH}-apple-macosx11.0" \
-    -framework AppKit -framework SceneKit -framework SwiftUI -framework QuartzCore \
+    -framework AppKit -framework SpriteKit -framework SwiftUI \
     Sources/BoatSimulator/main.swift -o "$ROOT/build/BoatSimulator-$ARCH"
 done
 lipo -create "$ROOT/build/BoatSimulator-arm64" "$ROOT/build/BoatSimulator-x86_64" -output "$ROOT/build/BoatSimulator"
