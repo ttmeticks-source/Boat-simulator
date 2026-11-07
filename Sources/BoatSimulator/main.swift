@@ -464,7 +464,8 @@ final class ShipScene: SKScene {
         }
 
         // Four ochre funnels, black caps, red bases, and dark smoke outlets.
-        let funnelPositions: [CGFloat] = [-130, -48, 36, 118]\n        for (i, x) in funnelPositions.enumerated() {
+        let funnelPositions: [CGFloat] = [-130, -48, 36, 118]
+        for (i, x) in funnelPositions.enumerated() {
             let funnelHeight: CGFloat = i == 1 ? 55 : 50
             addShipRect(25, funnelHeight, x, 174 + funnelHeight * 0.18, brass,
                         SKColor(red: 0.28, green: 0.20, blue: 0.10, alpha: 1), 4, 16)
