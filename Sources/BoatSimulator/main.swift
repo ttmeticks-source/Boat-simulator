@@ -15,7 +15,7 @@ struct SandboxView: View {
     @State private var paused = false
     @State private var tool = "Impact"
     @State private var wave = false
-    private let tools = ["Impact", "Cut", "Repair", "Fire", "Extinguish"]
+    private let tools = ["Impact", "Cut", "Repair", "Flood", "Pump", "Fire", "Extinguish"]
     var body: some View {
         ZStack {
             PhysicsView(resetID: resetID, paused: paused, tool: tool, wave: wave)
@@ -112,11 +112,17 @@ final class ShipScene: SKScene {
     private var lastUpdate: TimeInterval = 0
     private var waveEnergy: CGFloat = 0
     private var waterNodes: [SKShapeNode] = []
+    private var hullSkin: SKShapeNode!
+    private var internalWater: SKShapeNode!
+    private var cabinLights: [SKShapeNode] = []
     private var status: SKLabelNode!
     private var fireNodes: [SKShapeNode] = []
     private var leakCount = 0
     private var flood = 0.0
     private var heat = 0.0
+    private var waterMass: CGFloat = 0
+    private var electricalPower = true
+    private var simulationTime: CGFloat = 0
     private var dragging = false
     private var lastToolPoint = CGPoint.zero
 
@@ -156,6 +162,18 @@ final class ShipScene: SKScene {
     private func buildShip() {
         particles.removeAll(); springs.removeAll()
         let cx = size.width * 0.5
+        hullSkin = SKShapeNode()
+        hullSkin.fillColor = SKColor(red: 0.30, green: 0.075, blue: 0.055, alpha: 1)
+        hullSkin.strokeColor = SKColor(red: 0.92, green: 0.38, blue: 0.20, alpha: 1)
+        hullSkin.lineWidth = 3
+        hullSkin.zPosition = 1
+        addChild(hullSkin)
+        internalWater = SKShapeNode()
+        internalWater.fillColor = SKColor(red: 0.04, green: 0.48, blue: 0.68, alpha: 0.72)
+        internalWater.strokeColor = SKColor(red: 0.25, green: 0.85, blue: 1, alpha: 0.9)
+        internalWater.lineWidth = 1.5
+        internalWater.zPosition = 3
+        addChild(internalWater)
         let baseY = waterY + 62
         let count = 25
         for i in 0..<count {
@@ -185,6 +203,16 @@ final class ShipScene: SKScene {
         let windows = SKShapeNode(rectOf: CGSize(width: 95, height: 17), cornerRadius: 2)
         windows.fillColor = SKColor(red: 0.025, green: 0.13, blue: 0.18, alpha: 1)
         windows.strokeColor = .clear; windows.position = CGPoint(x: cx + 65, y: baseY + 98); windows.zPosition = 6; addChild(windows)
+        for i in 0..<7 {
+            let porthole = SKShapeNode(circleOfRadius: 5)
+            porthole.fillColor = SKColor(red: 0.20, green: 0.78, blue: 0.95, alpha: 1)
+            porthole.strokeColor = SKColor(white: 0.9, alpha: 0.8)
+            porthole.lineWidth = 1
+            porthole.position = CGPoint(x: cx - 230 + CGFloat(i) * 76, y: baseY + 30)
+            porthole.zPosition = 7
+            addChild(porthole)
+            cabinLights.append(porthole)
+        }
         for x in [cx - 115, cx - 58] {
             let stack = SKShapeNode(rectOf: CGSize(width: 23, height: 55), cornerRadius: 5)
             stack.fillColor = SKColor(red: 0.82, green: 0.22, blue: 0.07, alpha: 1)
@@ -222,7 +250,7 @@ final class ShipScene: SKScene {
             var p = particles[i]
             let old = p.position
             var velocity = (p.position - p.previous) * 0.992
-            var acceleration = CGVector(dx: 0, dy: -440)
+            var acceleration = CGVector(dx: 0, dy: -440 - waterMass * 0.42)
             let submersion = max(0, min(1, (waterY + 20 - p.position.y) / 34))
             acceleration.dy += submersion * (p.mass > 1.5 ? 710 : 570)
             acceleration.dx += sin(time * 1.3 + p.position.x * 0.008) * (submersion * 9 + waveEnergy * 24)
@@ -247,6 +275,50 @@ final class ShipScene: SKScene {
         for i in particles.indices {
             particles[i].node.position = particles[i].position
         }
+        // Break overstressed structural members. The freed nodes remain in the simulation
+        // and therefore behave as independently buoyant hull fragments.
+        var brokenNow = 0
+        springs.removeAll { spring in
+            let stretch = distance(particles[spring.a].position, particles[spring.b].position)
+            if stretch > spring.rest * (1.48 - spring.stiffness * 0.18) {
+                spring.node.removeFromParent()
+                brokenNow += 1
+                return true
+            }
+            return false
+        }
+        if brokenNow > 0 {
+            leakCount += brokenNow
+            flood = min(100, flood + Double(brokenNow) * 2.5)
+            waterMass += CGFloat(brokenNow) * 1.8
+        }
+        let hullPath = CGMutablePath()
+        if particles.count >= 4 {
+            hullPath.move(to: particles[0].position)
+            for i in stride(from: 2, to: particles.count, by: 2) { hullPath.addLine(to: particles[i].position) }
+            for i in stride(from: particles.count - 1, through: 1, by: -2) { hullPath.addLine(to: particles[i].position) }
+            hullPath.closeSubpath()
+        }
+        hullSkin.path = hullPath
+        let waterHeight = min(0.72, CGFloat(flood) / 100.0 * 0.72)
+        let innerPath = CGMutablePath()
+        let left = particles.first?.position.x ?? 0
+        let right = particles.dropFirst(2).last?.position.x ?? size.width
+        let bottom = waterY + 40
+        let top = waterY + 40 + waterHeight * 55
+        innerPath.move(to: CGPoint(x: left + 20, y: bottom))
+        innerPath.addLine(to: CGPoint(x: right - 20, y: bottom))
+        innerPath.addLine(to: CGPoint(x: right - 35, y: top))
+        innerPath.addLine(to: CGPoint(x: left + 35, y: top))
+        innerPath.closeSubpath()
+        internalWater.path = innerPath
+        internalWater.isHidden = flood < 1
+        for light in cabinLights {
+            light.fillColor = electricalPower && flood < 35
+                ? SKColor(red: 0.28, green: 0.86, blue: 1, alpha: 1)
+                : SKColor(white: 0.16, alpha: 1)
+        }
+        if flood >= 35 { electricalPower = false }
         for s in springs {
             let path = CGMutablePath()
             path.move(to: particles[s.a].position); path.addLine(to: particles[s.b].position)
@@ -311,6 +383,14 @@ final class ShipScene: SKScene {
                 let a = nearby[0], b = nearby[nearby.count - 1]
                 if a != b { connect(a, b, stiffness: 0.72); leakCount = max(0, leakCount - 1) }
             }
+        case "Flood":
+            flood = min(100, flood + 18)
+            waterMass += 18
+            if flood >= 35 { electricalPower = false }
+        case "Pump":
+            flood = max(0, flood - 18)
+            waterMass = max(0, waterMass - 18)
+            if flood < 35 { electricalPower = true }
         case "Fire": heat = min(100, heat + 28)
         case "Extinguish": heat = max(0, heat - 45)
         default: break
