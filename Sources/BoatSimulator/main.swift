@@ -346,6 +346,13 @@ final class ShipScene: SKScene {
         shipArt.zPosition = 8
         addChild(shipArt)
 
+        internalWater = SKShapeNode()
+        internalWater.fillColor = SKColor(red: 0.05, green: 0.48, blue: 0.68, alpha: 0.78)
+        internalWater.strokeColor = SKColor(red: 0.45, green: 0.88, blue: 0.98, alpha: 0.75)
+        internalWater.lineWidth = 1
+        internalWater.zPosition = 2
+        shipArt.addChild(internalWater)
+
         // Two longitudinal particle rows form the keel/deck structure.
         // The lower row has a shallow ship-shaped keel curve; the upper row
         // forms the sheer line along the deck.
@@ -379,25 +386,8 @@ final class ShipScene: SKScene {
         let glass = SKColor(red: 0.045, green: 0.16, blue: 0.23, alpha: 1)
         let brass = SKColor(red: 0.76, green: 0.48, blue: 0.15, alpha: 1)
 
-        // Hull sheer, bow flare and stern counter.
-        addShipPolygon([
-            CGPoint(x: -310, y: 37), CGPoint(x: -292, y: 22), CGPoint(x: -240, y: 9),
-            CGPoint(x: -145, y: 1), CGPoint(x: 0, y: -2), CGPoint(x: 160, y: 2),
-            CGPoint(x: 260, y: 12), CGPoint(x: 306, y: 35), CGPoint(x: 292, y: 49),
-            CGPoint(x: -285, y: 49)
-        ], fill: SKColor(red: 0.045, green: 0.09, blue: 0.13, alpha: 1),
-           stroke: SKColor(red: 0.015, green: 0.035, blue: 0.05, alpha: 1), width: 2, z: 2)
-        addShipPolygon([
-            CGPoint(x: -287, y: 23), CGPoint(x: -235, y: 5), CGPoint(x: -145, y: -3),
-            CGPoint(x: 0, y: -8), CGPoint(x: 160, y: -3), CGPoint(x: 260, y: 8),
-            CGPoint(x: 300, y: 31), CGPoint(x: 288, y: 35), CGPoint(x: 250, y: 22),
-            CGPoint(x: 150, y: 12), CGPoint(x: 0, y: 7), CGPoint(x: -150, y: 12),
-            CGPoint(x: -240, y: 23)
-        ], fill: SKColor(red: 0.58, green: 0.15, blue: 0.10, alpha: 1),
-           stroke: SKColor(red: 0.30, green: 0.07, blue: 0.05, alpha: 1), width: 1, z: 3)
-        addShipLine([CGPoint(x: -294, y: 39), CGPoint(x: -235, y: 29), CGPoint(x: -145, y: 23),
-                     CGPoint(x: 0, y: 21), CGPoint(x: 160, y: 25), CGPoint(x: 265, y: 37),
-                     CGPoint(x: 302, y: 48)], SKColor(red: 0.82, green: 0.78, blue: 0.65, alpha: 1), 2, 5)
+        // Hull geometry is drawn from the live particle mesh below; only the
+        // superstructure is static artwork so impacts and tears remain visible.
 
         // Broad lower promenade deck and progressively narrower upper decks.
         addShipPolygon([
@@ -611,10 +601,10 @@ final class ShipScene: SKScene {
         let right = particles.dropFirst(2).last?.position.x ?? size.width
         let bottom = waterY - 14
         let top = waterY - 14 + waterHeight * 42
-        innerPath.move(to: CGPoint(x: left + 20, y: bottom))
-        innerPath.addLine(to: CGPoint(x: right - 20, y: bottom))
-        innerPath.addLine(to: CGPoint(x: right - 35, y: top))
-        innerPath.addLine(to: CGPoint(x: left + 35, y: top))
+        innerPath.move(to: shipArt.convert(CGPoint(x: left + 20, y: bottom), from: self))
+        innerPath.addLine(to: shipArt.convert(CGPoint(x: right - 20, y: bottom), from: self))
+        innerPath.addLine(to: shipArt.convert(CGPoint(x: right - 35, y: top), from: self))
+        innerPath.addLine(to: shipArt.convert(CGPoint(x: left + 35, y: top), from: self))
         innerPath.closeSubpath()
         internalWater.path = innerPath
         internalWater.isHidden = flood < 1
