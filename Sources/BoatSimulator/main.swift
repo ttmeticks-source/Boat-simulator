@@ -38,7 +38,7 @@ struct SandboxView: View {
                 }
                 .frame(height: 30)
                 .background(LinearGradient(colors: [Color(white: 0.96), Color(white: 0.82)], startPoint: .top, endPoint: .bottom))
-                .overlay(alignment: .bottom) { Rectangle().fill(Color(white: 0.55)).frame(height: 1) }
+                .overlay(Rectangle().fill(Color(white: 0.55)).frame(height: 1), alignment: .bottom)
 
                 Spacer(minLength: 0)
 
@@ -84,8 +84,8 @@ struct SandboxView: View {
                 .background(
                     LinearGradient(colors: [Color(white: 0.74), Color(white: 0.55), Color(white: 0.67)], startPoint: .top, endPoint: .bottom)
                 )
-                .overlay(alignment: .top) { Rectangle().fill(Color.white.opacity(0.85)).frame(height: 1) }
-                .overlay(alignment: .bottom) { Rectangle().fill(Color(white: 0.30)).frame(height: 1) }
+                .overlay(Rectangle().fill(Color.white.opacity(0.85)).frame(height: 1), alignment: .top)
+                .overlay(Rectangle().fill(Color(white: 0.30)).frame(height: 1), alignment: .bottom)
             }
         }
         .preferredColorScheme(.light)
@@ -119,7 +119,7 @@ struct ToolButton: ButtonStyle {
                 )
             )
             .overlay(RoundedRectangle(cornerRadius: 3).stroke(active ? Color(red: 0.18, green: 0.38, blue: 0.58) : Color(white: 0.38), lineWidth: 1))
-            .overlay(alignment: .top) { Rectangle().fill(Color.white.opacity(0.75)).frame(height: 1).padding(.horizontal, 3) }
+            .overlay(Rectangle().fill(Color.white.opacity(0.75)).frame(height: 1).padding(.horizontal, 3), alignment: .top)
             .shadow(color: .black.opacity(0.18), radius: 1, x: 0, y: 1)
             .opacity(configuration.isPressed ? 0.72 : 1)
     }
