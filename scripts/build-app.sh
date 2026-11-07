@@ -16,7 +16,7 @@ APP="$ROOT/build/Boat Simulator.app"
 rm -rf "$APP"
 mkdir -p "$APP/Contents/MacOS" "$APP/Contents/Resources"
 if [[ -f "$ROOT/Assets/BoatSimulator.icns.base64" ]]; then
-  base64 -D "$ROOT/Assets/BoatSimulator.icns.base64" > "$APP/Contents/Resources/BoatSimulator.icns"
+  base64 -D -i "$ROOT/Assets/BoatSimulator.icns.base64" -o "$APP/Contents/Resources/BoatSimulator.icns"
 fi
 cp "$ROOT/build/BoatSimulator" "$APP/Contents/MacOS/BoatSimulator"
 cat > "$APP/Contents/Info.plist" <<PLIST
