@@ -21,7 +21,7 @@ struct SandboxView: View {
                 HStack {
                     VStack(alignment: .leading, spacing: 3) {
                         Text("BOAT SIMULATOR").font(.system(size: 19, weight: .black, design: .rounded)).tracking(3)
-                        Text("SHIP & OCEAN SANDBOX").font(.system(size: 9, weight: .bold, design: .monospaced)).tracking(2).foregroundColor(.cyan)
+                        Text("SHIP & OCEAN SANDBOX").font(.system(size: 9, weight: .bold, design: .monospaced)).tracking(2).foregroundColor(Color(red: 0.0, green: 0.85, blue: 0.95))
                     }
                     Spacer()
                     Button(paused ? "RESUME" : "PAUSE") { paused.toggle() }
@@ -45,8 +45,8 @@ struct ForgeButton: ButtonStyle {
     func makeBody(configuration: Configuration) -> some View {
         configuration.label.font(.system(size: 10, weight: .heavy, design: .monospaced))
             .padding(.horizontal, 14).padding(.vertical, 9)
-            .background(Color.cyan.opacity(configuration.isPressed ? 0.35 : 0.12))
-            .overlay(RoundedRectangle(cornerRadius: 5).stroke(Color.cyan.opacity(0.6)))
+            .background(Color(red: 0.0, green: 0.85, blue: 0.95).opacity(configuration.isPressed ? 0.35 : 0.12))
+            .overlay(RoundedRectangle(cornerRadius: 5).stroke(Color(red: 0.0, green: 0.85, blue: 0.95).opacity(0.6)))
             .foregroundColor(.white).cornerRadius(5)
     }
 }
@@ -91,14 +91,20 @@ struct OceanView: NSViewRepresentable {
         func renderer(_ renderer: SCNSceneRenderer, updateAtTime time: TimeInterval) {
             guard let root = renderer.scene?.rootNode.childNode(withName: "ship", recursively: false) else { return }
             let t = time - start
-            root.position.y = 0.16 + Float(sin(t * 0.8) * 0.12 + sin(t * 1.65) * 0.035)
-            root.eulerAngles.z = Float(sin(t * 0.52) * 0.035)
-            root.eulerAngles.x = Float(cos(t * 0.7) * 0.022)
-            for n in renderer.scene?.rootNode.childNodes.filter({ $0.name == "ripple" }) ?? [] {
-                let age = CGFloat(time - (n.userData?["born"] as? Double ?? time))
-                let s = Float(1 + age * 1.5)
-                n.scale = SCNVector3(s, 1, s)
-                n.opacity = max(0, 1 - age / 2.1)
+            let bob = 0.16 + sin(t * 0.8) * 0.12 + sin(t * 1.65) * 0.035
+            root.position.y = CGFloat(bob)
+            root.eulerAngles.z = CGFloat(sin(t * 0.52) * 0.035)
+            root.eulerAngles.x = CGFloat(cos(t * 0.7) * 0.022)
+            let rippleNodes = renderer.scene?.rootNode.childNodes.filter {
+                ($0.name ?? "").hasPrefix("ripple:")
+            } ?? []
+            for n in rippleNodes {
+                let parts = (n.name ?? "").split(separator: ":")
+                let born = parts.count > 1 ? (Double(parts[1]) ?? time) : time
+                let age = CGFloat(time - born)
+                let scale = Float(1.0 + age * 1.5)
+                n.scale = SCNVector3(scale, 1, scale)
+                n.opacity = CGFloat(max(0.0, 1.0 - age / 2.1))
                 if age > 2.1 { n.removeFromParentNode() }
             }
         }
@@ -173,8 +179,9 @@ enum World {
         let g = SCNTorus(ringRadius: 0.38, pipeRadius: 0.018)
         g.firstMaterial?.diffuse.contents = NSColor.cyan
         g.firstMaterial?.emission.contents = NSColor.cyan.withAlphaComponent(0.35)
-        let n = SCNNode(geometry: g); n.name = "ripple"; n.eulerAngles.x = .pi / 2
-        n.position = SCNVector3(p.x, 0.025, p.z); n.userData = ["born": CACurrentMediaTime()]
+        let born = CACurrentMediaTime()
+        let n = SCNNode(geometry: g); n.name = "ripple:\(born)"; n.eulerAngles.x = .pi / 2
+        n.position = SCNVector3(p.x, 0.025, p.z)
         scene.rootNode.addChildNode(n)
     }
 }
